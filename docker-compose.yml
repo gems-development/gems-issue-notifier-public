@@ -1,0 +1,6 @@
+services:
+  gems.techsupport:
+    image: ${DOCKER_REGISTRY-}gemstechsupport
+    build:
+      context: .
+      dockerfile: Gems.TechSupport/Dockerfile

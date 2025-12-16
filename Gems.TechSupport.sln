@@ -1,0 +1,56 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36414.22
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gems.TechSupport.Domain", "Gems.TechSupport.Domain\Gems.TechSupport.Domain.csproj", "{C9F9BF4D-6146-46D8-91E3-858935D4971C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gems.TechSupport.Application", "Gems.TechSupport.Application\Gems.TechSupport.Application.csproj", "{A8795FD3-5409-4BA9-9644-2A1E2AECA45C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gems.TechSupport.Persistence", "Gems.TechSupport.Persistence\Gems.TechSupport.Persistence.csproj", "{A7CC4287-C767-4D47-95AB-0978D1A24906}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gems.TechSupport.Infrastructure", "Gems.TechSupport.Infrastructure\Gems.TechSupport.Infrastructure.csproj", "{4E7D3CA7-472C-42D0-ADDF-DACB1F97DF6D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gems.TechSupport", "Gems.TechSupport\Gems.TechSupport.csproj", "{9586ACA0-A79C-4CBE-B6E2-0B89B45CDEB5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{955691D8-2808-4963-B175-5798E9C22D1F}"
+	ProjectSection(SolutionItems) = preProject
+		docker-compose.yaml = docker-compose.yaml
+		prometheus.yml = prometheus.yml
+		otel-collector.yaml = otel-collector.yaml
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C9F9BF4D-6146-46D8-91E3-858935D4971C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C9F9BF4D-6146-46D8-91E3-858935D4971C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C9F9BF4D-6146-46D8-91E3-858935D4971C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C9F9BF4D-6146-46D8-91E3-858935D4971C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A8795FD3-5409-4BA9-9644-2A1E2AECA45C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A8795FD3-5409-4BA9-9644-2A1E2AECA45C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A8795FD3-5409-4BA9-9644-2A1E2AECA45C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A8795FD3-5409-4BA9-9644-2A1E2AECA45C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A7CC4287-C767-4D47-95AB-0978D1A24906}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A7CC4287-C767-4D47-95AB-0978D1A24906}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A7CC4287-C767-4D47-95AB-0978D1A24906}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A7CC4287-C767-4D47-95AB-0978D1A24906}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4E7D3CA7-472C-42D0-ADDF-DACB1F97DF6D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4E7D3CA7-472C-42D0-ADDF-DACB1F97DF6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4E7D3CA7-472C-42D0-ADDF-DACB1F97DF6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4E7D3CA7-472C-42D0-ADDF-DACB1F97DF6D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9586ACA0-A79C-4CBE-B6E2-0B89B45CDEB5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9586ACA0-A79C-4CBE-B6E2-0B89B45CDEB5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9586ACA0-A79C-4CBE-B6E2-0B89B45CDEB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9586ACA0-A79C-4CBE-B6E2-0B89B45CDEB5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {97CC663F-8996-4497-9506-77FE4902E548}
+	EndGlobalSection
+EndGlobal

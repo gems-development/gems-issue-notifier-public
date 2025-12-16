@@ -1,0 +1,47 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <UserSecretsId>dotnet-Gems.TechSupport-1568ad1e-88fe-40fd-899d-cadc95127a38</UserSecretsId>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0"/>
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.11"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.9"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.9">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.9">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.9"/>
+        <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1"/>
+        <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.13.1"/>
+        <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.13.1-beta.1"/>
+        <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.13.1"/>
+        <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.13.0"/>
+        <PackageReference Include="OpenTelemetry.Instrumentation.Process" Version="1.13.0-beta.1"/>
+        <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.13.0"/>
+        <PackageReference Include="Serilog.AspNetCore" Version="10.0.0"/>
+        <PackageReference Include="Serilog.Sinks.OpenTelemetry" Version="4.2.0"/>
+        <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.13.0"/>
+
+
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Gems.TechSupport.Application\Gems.TechSupport.Application.csproj"/>
+        <ProjectReference Include="..\Gems.TechSupport.Domain\Gems.TechSupport.Domain.csproj"/>
+        <ProjectReference Include="..\Gems.TechSupport.Infrastructure\Gems.TechSupport.Infrastructure.csproj"/>
+        <ProjectReference Include="..\Gems.TechSupport.Persistence\Gems.TechSupport.Persistence.csproj"/>
+    </ItemGroup>
+    <ItemGroup>
+        <Folder Include="Properties\"/>
+    </ItemGroup>
+</Project>
