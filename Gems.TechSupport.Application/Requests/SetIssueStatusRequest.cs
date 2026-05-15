@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Gems.TechSupport.Application.Requests;
 
-public record SetIssueStatusRequest(long IssueId, IssueStatus IssueStatus)
+public record SetIssueStatusRequest(long IssueId,IssueStatus IssueStatus)
 {
     [JsonIgnore]
     public long IssueId { get; init; } = IssueId;

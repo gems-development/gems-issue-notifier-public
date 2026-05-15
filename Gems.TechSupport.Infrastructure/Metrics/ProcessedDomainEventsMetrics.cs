@@ -1,38 +1,27 @@
-﻿using Gems.TechSupport.Domain.Primitives;
-using Microsoft.Extensions.Logging;
-using System.Collections.Concurrent;
-using System.Diagnostics.Metrics;
+﻿using System.Diagnostics.Metrics;
 
 namespace Gems.TechSupport.Infrastructure.Metrics;
 
-internal sealed class ProcessedDomainEventsMetrics
+public sealed class ProcessedDomainEventsMetrics
 {
-    private const string MeterName = nameof(ProcessedDomainEventsMetrics);
-
-    private readonly Meter _meter;
-
-    private readonly ConcurrentDictionary<string, Counter<long>> _processedDomainEventsCounter = [];
+    private const string MeterName = "ProcessedDomainEvents";
+    private readonly Counter<long> _processedEvents;
 
     public ProcessedDomainEventsMetrics(IMeterFactory meterFactory)
     {
-        _meter = meterFactory.Create(MeterName);
+        var meter = meterFactory.Create(MeterName);
 
-        var assembly = typeof(IDomainEvent).Assembly;
-
-        var domainEventNames = assembly
-            .DefinedTypes
-            .Where(type => type is { IsAbstract: false, IsInterface: false } && type.IsAssignableTo(typeof(IDomainEvent)))
-            .Select(type => type.Name)
-            .ToList();
-
-        foreach (var domainEventName in domainEventNames)
-        {
-            _processedDomainEventsCounter.TryAdd(domainEventName, _meter.CreateCounter<long>($"{domainEventName}"));
-        }
+        _processedEvents = meter.CreateCounter<long>(
+            "gems.issue_notifier.processed_domain_events_total",
+            description: "Number of processed domain events"
+        );
     }
 
     public void RecordDomainEventProcessedSuccessfully(string eventType)
     {
-        _processedDomainEventsCounter[eventType].Add(1);
+        _processedEvents.Add(
+            1,
+            new KeyValuePair<string, object?>("event_type", eventType)
+        );
     }
 }

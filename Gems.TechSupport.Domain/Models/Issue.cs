@@ -57,8 +57,12 @@ public class Issue : AggregateRoot
     public Company? Company { get; set; }
     public Contact? Contact { get; set; }
     public Assignee? Assignee { get; set; }
+    public DateTime? StaleNotifiedAt { get; private set; }
+
 
     public bool IsSkitType => Title is not null && Regex.Match(Title, SkitPattern).Success;
+
+    public void MarkAsStaleNotified() => StaleNotifiedAt = DateTime.UtcNow;
 
     /// <summary>
     /// Recreates an existing issue from the Okdesk API without triggering creation events.
@@ -119,20 +123,23 @@ public class Issue : AggregateRoot
         Description = UpdateIfNotNull(Description, issue.Description);
         UpdatedAt = UpdateIfNotNull(UpdatedAt, issue.UpdatedAt);
         Assignee = UpdateIfNotNull(Assignee, issue.Assignee);
+        Contact = UpdateIfNotNull(Contact, issue.Contact);
+        Company = UpdateIfNotNull(Company, issue.Company);
 
         UpdateStatus(issue);
         UpdateDeadline(issue);
-        UpdateCompletedAt(issue);
 
         foreach (var comment in issue._comments)
         {
             if (!_comments.Contains(comment))
             {
                 AddComment(comment);
-
-                var issueCommentCreatedEvent = new IssueCommentCreatedEvent(Id, comment.Contact.Id,
-                    comment.Contact.FullName, comment.Content);
-                AddDomainEvent(issueCommentCreatedEvent);
+                if (CheckStatusToDisableEventsGeneration())
+                {
+                    var issueCommentCreatedEvent = new IssueCommentCreatedEvent(Id, Assignee?.Id, comment.Contact.Id,
+                     comment.Contact.FullName, comment.Public, comment.Content);
+                    AddDomainEvent(issueCommentCreatedEvent);
+                }
             }
         }
     }
@@ -141,18 +148,18 @@ public class Issue : AggregateRoot
     {
         if (issue.Priority is not null && issue.Priority != Priority)
         {
+            var oldPriority = Priority;
             Priority = issue.Priority;
 
-            if (Assignee is not null && Contact is not null && IsSkitType is false)
+            if (CheckStatusToDisableEventsGeneration() && Assignee is not null && Contact is not null && IsSkitType is false && oldPriority is not null)
             {
                 var priorityUpdatedEvent = new IssuePriorityUpdatedEvent(
-                    Id, Assignee.Id, Contact.FullName, issue.Priority.Value, updateAuthorType);
+                    Id, Assignee.Id, Contact.FullName, oldPriority.Value, issue.Priority.Value, updateAuthorType);
 
                 AddDomainEvent(priorityUpdatedEvent);
             }
         }
     }
-
     public void AddComment(Comment comment)
     {
         _comments.Add(comment);
@@ -183,33 +190,77 @@ public class Issue : AggregateRoot
             issue._comments.AddRange(comments);
         }
 
-        if (newCreated && status == IssueStatus.InWork)
-        {
-            if (assignee is not null && contact is not null && type is not null && priority is not null && issue.IsSkitType is false)
-            {
-                var deadlineNotificationEvent = new IssueDeadlineNotificationEvent(
-                    id, assignee.Id, contact.FullName, type.Value, priority.Value);
-
-                issue.AddDomainEvent(deadlineNotificationEvent);
-            }
-        }
-
         return issue;
     }
 
-    private void UpdateStatus(Issue issue)
+    public void UpdateStatus(Issue issue)
     {
         if (issue.Status is not null && issue.Status != Status)
         {
+            var oldStatus = Status;
+            var canGenerateEvents = CheckStatusToDisableEventsGeneration();
             Status = issue.Status;
 
-            if (Assignee is not null && Contact is not null && IsSkitType is false)
+            if (issue.CompletedAt is not null && issue.CompletedAt != CompletedAt)
+            {
+                CompletedAt = issue.CompletedAt;
+
+                if (canGenerateEvents)
+                {
+                    if (Status == IssueStatus.Completed &&
+                       Assignee is not null && IsSkitType is false)
+                    {
+                        var issueCompletedEvent = new IssueCompletedEvent(Id, Assignee.Id);
+                        AddDomainEvent(issueCompletedEvent);
+                    }
+                    else if (Status == IssueStatus.Wish &&
+                        Assignee is not null && IsSkitType is false)
+                    {
+                        var statusUpdatedEvent = new IssueStatusUpdatedEvent(
+                        Id, Assignee.Id, Contact.FullName, oldStatus!.Value, issue.Status.Value);
+
+                        AddDomainEvent(statusUpdatedEvent);
+                    }
+                }
+            }
+            else if (canGenerateEvents && oldStatus == IssueStatus.Opened && issue.Status == IssueStatus.InWork)
+            {
+                if (Assignee is not null && Contact is not null && Type is not null && Priority is not null && IsSkitType is false)
+                {
+                    var deadlineNotificationEvent = new IssueDeadlineNotificationEvent(
+                        Id, Assignee.Id, Contact.FullName, Type.Value, Priority.Value);
+
+                    AddDomainEvent(deadlineNotificationEvent);
+                }
+            }
+            else if (canGenerateEvents && Assignee is not null && Contact is not null && IsSkitType is false && oldStatus is not null)
             {
                 var statusUpdatedEvent = new IssueStatusUpdatedEvent(
-                    Id, Assignee.Id, Contact.FullName, issue.Status.Value);
+                    Id, Assignee.Id, Contact.FullName, oldStatus!.Value, issue.Status.Value);
 
                 AddDomainEvent(statusUpdatedEvent);
             }
+        }
+    }
+
+    public void UpdateProblem(string? newProblemName)
+    {
+        if (!CheckStatusToDisableEventsGeneration() ||
+            string.IsNullOrWhiteSpace(newProblemName) ||
+            Assignee is null ||
+            IsSkitType)
+        { return; }
+
+        Status = IssueStatus.Completed;
+
+        if (Assignee is not null && IsSkitType is false)
+        {
+            var issueAutoCompletedEvent = new IssueAutoCompletedEvent(Id, Assignee.Id, newProblemName);
+            AddDomainEvent(issueAutoCompletedEvent);
+            var issueCompletedEvent = new IssueCompletedEvent(Id, Assignee.Id);
+            AddDomainEvent(issueCompletedEvent);
+            var postCommentForClosedIssue = new IssueProblemPostCommentEvent(Id, Assignee.Id, newProblemName);
+            AddDomainEvent(postCommentForClosedIssue);
         }
     }
 
@@ -219,29 +270,29 @@ public class Issue : AggregateRoot
         {
             DeadlineAt = issue.DeadlineAt;
 
-            if (Assignee is not null && Contact is not null && issue.DeadlineAt is not null && IsSkitType is false)
+            if (CheckStatusToDisableEventsGeneration() && Assignee is not null && Contact is not null && issue.DeadlineAt is not null && IsSkitType is false)
             {
                 var deadlineUpdatedEvent = new IssueDeadlineUpdatedEvent(
-                    Id, Assignee.Id, Contact.FullName, issue.DeadlineAt.Value);
+                Id, Assignee.Id, Contact.FullName, issue.DeadlineAt.Value);
 
                 AddDomainEvent(deadlineUpdatedEvent);
             }
         }
     }
-
-    private void UpdateCompletedAt(Issue issue)
+    public void UpdateType(IssueType? newType)
     {
-        if (issue.CompletedAt is not null && issue.CompletedAt != CompletedAt)
+        if (newType is not null && newType != Type)
         {
-            CompletedAt = issue.CompletedAt;
-
-            if (Assignee is not null && IsSkitType is false)
-            {
-                var issueCompletedEvent = new IssueCompletedEvent(Id, Assignee.Id);
-                AddDomainEvent(issueCompletedEvent);
-            }
+            Type = newType;
         }
     }
-
     private static T UpdateIfNotNull<T>(T? newValue, T current) => newValue ?? current;
+
+
+    private bool CheckStatusToDisableEventsGeneration()
+    {
+        return Status != IssueStatus.Completed &&
+           Status != IssueStatus.Closed &&
+           Status != IssueStatus.Wish;
+    }
 }

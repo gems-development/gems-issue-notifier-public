@@ -12,7 +12,7 @@ internal static class Constants
         internal const string SkitTagPattern = @"\[SKIT\s*#(?<num>\d+)\]";
         internal const string ParentTitleTemplate = "[SKIT #{0}] Вам назначена заявка в СКИТ";
     }
-    
+
     internal static class OkdeskFeatures
     {
         internal const string SkitIssuesProcessing = "SkitIssuesProcessingEnabled";
@@ -23,4 +23,13 @@ internal static class Constants
         internal const string Employee = "employee";
         internal const string Contact = "contact";
     }
+    internal static class AutoCloseProblemNames
+    {
+        internal const string CodeProblem = "prblm2";
+    }
+    internal static class LoggingFeatures
+    {
+        internal const string WebhookRequestLogging = "WebhookRequestLoggingEnabled";
+    }
 }
+

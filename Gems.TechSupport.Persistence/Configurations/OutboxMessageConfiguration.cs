@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Gems.TechSupport.Persistence.Configurations;
 
-internal sealed class OutboxMessageConfiguration : IEntityTypeConfiguration<OutboxMessage>
+internal sealed class OutboxMessageConfiguration : IEntityTypeConfiguration<DomainEventOutboxMessage>
 {
-    public void Configure(EntityTypeBuilder<OutboxMessage> builder)
+    public void Configure(EntityTypeBuilder<DomainEventOutboxMessage> builder)
     {
         builder.ToTable("OutboxMessages");
         builder.HasKey(x => x.Id);

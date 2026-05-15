@@ -6,7 +6,6 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.FeatureManagement;
 using Newtonsoft.Json;
 using Polly;
 using Polly.Retry;
@@ -15,20 +14,20 @@ using Quartz;
 namespace Gems.TechSupport.Infrastructure.BackgroundJobs;
 
 [DisallowConcurrentExecution]
-internal sealed class ProcessOutboxMessagesJob(
+internal sealed class ProcessDomainEventOutboxMessagesJob(
     ApplicationDbContext dbContext,
     IPublisher publisher,
     IOptionsMonitor<ProcessOutboxMessagesOptions> options,
-    ILogger<ProcessOutboxMessagesJob> logger,
-    ProcessedDomainEventsMetrics metrics) 
+    ILogger<ProcessDomainEventOutboxMessagesJob> logger,
+    ProcessedDomainEventsMetrics metrics)
     : IJob
 {
     public async Task Execute(IJobExecutionContext context)
     {
         var outboxOptions = options.CurrentValue;
 
-        List<OutboxMessage> messages = await dbContext
-            .Set<OutboxMessage>()
+        List<DomainEventOutboxMessage> messages = await dbContext
+            .Set<DomainEventOutboxMessage>()
             .Where(x => x.ProcessedOnUtc == null)
             .OrderBy(x => x.OccuredOnUtc)
             .Take(outboxOptions.ProcessMessagesBatchSize)
@@ -69,25 +68,37 @@ internal sealed class ProcessOutboxMessagesJob(
             }
         }
         await dbContext.SaveChangesAsync(context.CancellationToken);
+
+        var trigger = context.Trigger as ISimpleTrigger;
+
+        if (trigger != null)
+        {
+
+            var currentIntervalSeconds = (int)trigger.RepeatInterval.TotalSeconds;
+
+            if (currentIntervalSeconds != outboxOptions.ProcessIntervalInSecondsForDomainEvent)
+                await QuartzTriggerUpdater.UpdateIntervalSecondsAsync(context, outboxOptions.ProcessIntervalInSecondsForDomainEvent);
+        }
     }
 
     private Task<PolicyResult> ExecuteWithRetryPolicyAsync(
         IDomainEvent domainEvent,
-        OutboxMessage message,
-        ProcessOutboxMessagesOptions outboxOptions, 
+        DomainEventOutboxMessage message,
+        ProcessOutboxMessagesOptions outboxOptions,
         CancellationToken cancellationToken)
     {
         AsyncRetryPolicy policy = Policy
             .Handle<Exception>()
             .WaitAndRetryAsync(
-            outboxOptions.RetryCount,
-            attempt => TimeSpan.FromSeconds(3 * attempt),
-            (exception, delay, attempt, context) =>
-            {
-                logger.LogWarning(
-                    "Retry attempt={Attempt} after delay={Delay}s for message {MessageType}:{MessageId}",
-                    attempt, delay, message.Type, message.Id);
-            });
+                outboxOptions.RetryCount,
+                attempt => TimeSpan.FromSeconds(3 * attempt),
+                (exception, delay, attempt, context) =>
+                {
+                    logger.LogWarning(
+                        "Retry attempt={Attempt} after delay={Delay}s for message {MessageType}:{MessageId}",
+                        attempt, delay, message.Type, message.Id);
+                }
+            );
 
         return policy.ExecuteAndCaptureAsync(() => publisher.Publish(domainEvent, cancellationToken));
     }

@@ -1,6 +1,61 @@
+﻿version: '3.8'
 services:
-  gems.techsupport:
-    image: ${DOCKER_REGISTRY-}gemstechsupport
-    build:
-      context: .
-      dockerfile: Gems.TechSupport/Dockerfile
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.108.0
+    container_name: otel-collector
+    ports:
+      - "4318:4318"  # OTLP HTTP
+      - "9464:8889"  # Prometheus metrics
+    volumes:
+      - ./otel-collector.yaml:/etc/otelcol/config.yaml:ro
+    command: ["--config=/etc/otelcol/config.yaml"]
+    restart: unless-stopped
+    networks:
+      - monitoring
+
+  prometheus:
+    image: prom/prometheus:v2.53.1
+    container_name: prometheus
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    networks:
+      - monitoring
+    depends_on:
+      - otel-collector
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: grafana
+    ports:
+      - "3031:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_FEATURE_TOGGLES_ENABLE=traceqlEditor
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+    restart: unless-stopped
+    networks:
+      - monitoring
+    depends_on:
+      - prometheus
+
+networks:
+  monitoring:
+    driver: bridge
+
+volumes:
+  prometheus_data:
+  grafana_data:

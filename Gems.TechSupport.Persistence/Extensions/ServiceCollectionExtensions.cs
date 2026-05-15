@@ -25,11 +25,6 @@ public static class ServiceCollectionExtensions
         });
 
         services.AddScoped<IApplicationDbContext, ApplicationDbContext>();
-
-
-        services.AddHealthChecks()
-            .AddNpgSql(connectionString);
-
         return services;
     }
 }

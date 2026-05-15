@@ -2,5 +2,9 @@
 
 namespace Gems.TechSupport.Domain.Events;
 
-public record IssueDeadlineUpdatedEvent(long IssueId, long AssigneeId, string ContactFullName, DateTime DeadlineAt) 
+public record IssueDeadlineUpdatedEvent(
+    long IssueId,
+    long AssigneeId,
+    string ContactFullName,
+    DateTime DeadlineAt)
     : IDomainEvent;

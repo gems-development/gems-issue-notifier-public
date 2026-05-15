@@ -6,15 +6,20 @@
 
 - [Okdesk](#Okdesk)
 - [Telegram](#Telegram)
+- [Masking](#Masking)
+- [Логирование](#Logging)
+
+
 
 ## Okdesk
 
 1. [Список возвращаемых атрибутов заявки](#fields)
 2. [Ограничение количества запросов](#requests-limit)
 3. [Интервал запроса заявок](#request-interval)
-4. [Фильтры запросов](#filters)
-5. [Шаблоны сообщений](#message-templates)
-6. [Активация бизнес процессов](#features)
+4. [Интервал агрегации событий](#aggregation-interval)
+5. [Фильтры запросов](#filters)
+6. [Шаблоны сообщений](#message-templates)
+7. [Активация бизнес процессов](#features)
 ###  <a id="fields">Список возвращаемых атрибутов заявки</a>
 
 Поле *Fields* отвечает за то, какие параметры заявки будет получать система при каждом запросе пакета заявок. На данный момент список атрибутов содержит: **id, title, created_at, deadline_at, updated_at, completed_at, status, type, priority, company, contact, assignee.**
@@ -26,6 +31,15 @@
 ### <a id="request-interval">Интервал запроса заявок</a>
 
 Поле *IssuesRequestIntervalInMinutes* отвечает за интервал запроса заявок в минутах.
+
+### <a id="aggregation-interval">Интервал агрегации событий</a>
+
+Секция *OutboxMessages* содержит следующие поля для конфигурациия агрегации:
+- *IntervalInHoursForGreetings* - Через сколько часов снова можно добавлять приветственное сообщение по одной и той же заявке,
+- *ProcessIntervalInSecondsForDomainEvent* - Как часто, в секундах, система проверяет и обрабатывает обычные события по заявкам,
+- *ProcessIntervalInSecondsForCommentAggregator* - Как часто, в секундах, система собирает комментарии/события по заявке в одно сообщение,
+- *ProcessMessagesBatchSize* -  Сколько сообщений система берёт в обработку за один запуск,
+- *RetryCount* - Сколько раз система повторит обработку или отправку, если с первого раза произошла ошибка
 
 ### <a id="filters">Фильтры запросов</a>
 
@@ -167,6 +181,18 @@
         <td>SkitIssuesProcessingEnabled</td>
         <td>Обработка заявок СКИТ</td>
     </tr>
+    <tr>
+        <td>IssueProblemPostCommentEventEnabled</td>
+        <td>Обработка заявок СКИТ</td>
+    </tr>
+     <tr>
+        <td>IssueAutoCompletedEventEnabled</td>
+        <td>Авто-закрытие заявок по проблеме</td>
+    </tr>
+     <tr>
+        <td>IssueProblemPostCommentEventEnabled</td>
+        <td>Создание комментария при авто-закрытии заявки</td>
+    </tr>
 </table>
 
 ## Telegram
@@ -175,6 +201,7 @@
 2. [Получение chat ID и thread ID для группы, разделенной на темы](#chatid-with-themes)
 3. [Получение chat ID и thread ID для группы, не разделенной на темы](#chatid-with-themes)
 4. [Шаблоны оповещений](#telegram-notifications)
+5. [Другие параметры](#parameters)
 
 ### <a id="telegram-bot">Создание Telegram бота</a>
 [Официальная документация по созданию и настройке бота в Telegram](https://core.telegram.org/bots/features#botfather)
@@ -205,9 +232,85 @@
 - Найдите `"chat":{"id":-zzzzzzzzzz,...`
 - `-zzzzzzzzzz` - chat ID группы.
 
+
 ### <a id="telegram-notifications">Шаблоны оповещений</a>
 
-Система предоставляет возможность конфигурировать шаблоны оповещений, приходящих в telegram. Для этого используются следующие поля:
+Система предоставляет возможность конфигурировать шаблоны оповещений, приходящих в Telegram. Для этого используются следующие поля:
 
 - *IssueCommentCreatedMessageTemplate* - шаблон оповещения инженера технической поддержки о появлении нового комментария в заявке от клиента.
 - *IssuePriorityUpdatedMessageTemplate* - шаблон оповещения инженера технической поддержки об обновлении приоритета заявки от клиента.
+- *StaleIssueNotificationMessageTemplate* - шаблон оповещения инженера технической поддержки о заявке без новых комментариев от инженера технической поддержки в течение длительного времени
+
+### <a id="parameters">Другие параметры</a>
+
+- *Asignee username* - сопоставляет ID инженера технической поддержки в Okdesk с его username в Telegram.   Если оповещение отправляется по заявке, у которой ответственный сотрудник указан в *Assignee username*, то в оповещении будет использован его username.
+- *MaxCommentLength* - максимальная длина комментария Oksesk, который будет отображен в оповещении (в символах). Если комментарий превышает указанную длину, он будет обрезан. Максимальное значение - *4096* символов.
+
+## Инструкция для разработчиков для запуска:
+1. Склонировать репозиторий и перейти в корень проекта
+2. Установить .NET 10.0 SDK
+3. docker compose up -d
+4. $env:DOTNET_ENVIRONMENT="Development"
+5. $env:CONSUL_KEY="Gems.TechSupportIssueNotifier/appsettings.Development.json" 
+6. $env:CONSUL_HOST="http://localhost:8500/"
+7. dotnet ef database update --project .\Gems.TechSupport.Persistence\ --startup-project .\Gems.TechSupport\
+P.S запуск команды для миграций происходит из корня проекта
+8. Запуск проекта из Visual Studio/Rider или командой `dotnet run --project .\Gems.TechSupport\` из корня проекта
+
+## Logging
+1. [Уровни логирования](#minimum-levels)
+2. [Вывод логов](#log-output)
+
+Приложение использует `Serilog` для записи логов.
+
+### <a id="minimum-levels">Уровни логирования</a>
+
+Базовый уровень логирования — `Debug`.
+
+Переопределенные уровни:
+<table>
+    <tr>
+        <th>Microsoft</th>
+        <th>Information</th>
+    </tr>
+    <tr>
+        <td>Microsoft.AspNetCore</td>
+        <td>Information</td>
+    </tr>
+    <tr>
+        <td>Microsoft.EntityFrameworkCore</td>
+        <td>Information</td>
+    </tr>
+    <tr>
+        <td>System</td>
+        <td>Warning</td>
+    </tr>
+    <tr>
+        <td>Polly</td>
+        <td>Information</td>
+    </tr>
+    <tr>
+        <td>Quartz</td>
+        <td>Warning</td>
+    </tr>
+</table>
+
+### <a id="log-output">Вывод логов</a>
+
+В консоль выводятся все логи **кроме** сообщений по `Webhooks`.
+
+Логи по `Webhooks` записываются в файл
+
+Параметры файла:
+- path - путь к файлу логов
+- rollingInterval - период, по которому создаются новые файлы логов  
+- retainedFileCountLimit - количесвто хранимых файлов логов
+- fileSizeLimitBytes -  максимальный размер одного файла логов
+- rollOnFileSizeLimit - при превышении размера создаётся новый файл
+
+## Masking
+В сервисе реализован механизм анонимизации клиентов.
+
+По умолчанию обращение к клиенту в комментариях осуществляется по значению поля **Имя** из Okdesk.
+
+Если полное имя клиента содержит слова, указанные в поле *Keywords*, то в комментариях используется его **полное имя** вместо сокращённого обращения.

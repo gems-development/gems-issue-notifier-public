@@ -4,17 +4,15 @@ public enum IssueStatus
 {
     Opened = 1,
     InWork,
-    Waiting,
     Development,
-    Partner,
     Analytics,
     Request,
     Backlog,
+    Jira_Po,
     Wish,
     Vnedrenie,
     Testirovanie,
     WaitingForUpdate,
-    Delayed,
     Closed,
     Completed,
     Undefined

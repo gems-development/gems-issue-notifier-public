@@ -3,5 +3,10 @@ using Gems.TechSupport.Domain.Primitives;
 
 namespace Gems.TechSupport.Domain.Events;
 
-public record IssueStatusUpdatedEvent(long IssueId, long AssigneeId, string ContactFullName, IssueStatus Status) 
+public record IssueStatusUpdatedEvent(
+    long IssueId,
+    long AssigneeId,
+    string ContactFullName,
+    IssueStatus OldStatus,
+    IssueStatus NewStatus)
     : IDomainEvent;

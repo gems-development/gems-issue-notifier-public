@@ -1,21 +1,24 @@
-﻿using Gems.TechSupport.Application.Responses.Models;
+﻿using Gems.TechSupport.Application.Abstractions.Masking;
+using Gems.TechSupport.Application.Responses.Models;
 using Gems.TechSupport.Domain.Enums;
 using Gems.TechSupport.Domain.Models;
+using Gems.TechSupport.Application.Abstractions.Responses;
 
 namespace Gems.TechSupport.Application.Responses;
 
-public static class ResponseToDomainMapper
+internal sealed class ResponseToDomainMapper(IMasker masker): IResponseToDomainMapper
+
 {
-    public static Contact ToDomain(this ContactResponse response)
+    public Contact ToDomain(ContactResponse response)
     {
         return new Contact
         {
             Id = response.Id,
-            FullName = response.Name
+            FullName = masker.MaskFullName(response.Name)
         };
     }
 
-    public static Assignee? ToDomain(this AssigneeResponse response)
+    public Assignee? ToDomain(AssigneeResponse response)
     {
         if (response.Id is null || response.Name is null)
         {
@@ -25,11 +28,11 @@ public static class ResponseToDomainMapper
         return new Assignee
         {
             Id = response.Id.Value,
-            FullName = response.Name,
+            FullName = masker.MaskFullName(response.Name)
         };
     }
 
-    public static Company ToDomain(this CompanyResponse response)
+    public Company ToDomain(CompanyResponse response)
     {
         return new Company
         {
@@ -38,7 +41,7 @@ public static class ResponseToDomainMapper
         };
     }
 
-    public static Comment? ToDomain(this CommentResponse response, long issueId)
+    public Comment? ToDomain(CommentResponse response, long issueId)
     {
         if (Enum.Parse<CommentAuthorType>(response.Author.Type, true) == CommentAuthorType.Employee)
         {
@@ -49,16 +52,17 @@ public static class ResponseToDomainMapper
         {
             Id = response.Id,
             Content = response.Content,
+            Public = response.Public,
             CreatedAt = response.PublishedAt.ToUniversalTime(),
             Contact = new Contact
             {
                 Id = response.Author.Id,
-                FullName = response.Author.Name
+                FullName = masker.MaskFullName(response.Author.Name)
             }
         };
     }
 
-    public static IssuePriority ToDomain(this PriorityResponse response)
+    public IssuePriority ToDomain(PriorityResponse response)
     {
         if (Enum.TryParse<IssuePriority>(response.Code, true, out var priority))
         {
@@ -70,7 +74,7 @@ public static class ResponseToDomainMapper
         }
     }
 
-    public static IssueStatus ToDomain(this StatusResponse response)
+    public IssueStatus ToDomain(StatusResponse response)
     {
         if (Enum.TryParse<IssueStatus>(response.Code, true, out var status))
         {
@@ -82,7 +86,7 @@ public static class ResponseToDomainMapper
         }
     }
 
-    public static IssueType ToDomain(this TypeResponse response)
+    public IssueType ToDomain(TypeResponse response)
     {
         if (Enum.TryParse<IssueType>(response.Code.ToString(), true, out var type))
         {
@@ -94,41 +98,41 @@ public static class ResponseToDomainMapper
         }
     }
 
-    public static Issue ToDomainExisting(this IssueResponse response)
+    public Issue ToDomainExisting(IssueResponse response)
     {
         return Issue.CreateExisting(
             id: response.Id,
             title: response.Title,
             description: response.Description,
-            priority: response.Priority?.ToDomain(),
-            status: response.Status?.ToDomain(),
-            type: response.Type?.ToDomain(),
+            priority: response.Priority is null ? null: ToDomain(response.Priority),
+            status: response.Status is null ? null : ToDomain(response.Status),
+            type: response.Type is null ? null : ToDomain(response.Type),
             createdAt: response.CreatedAt?.ToUniversalTime(),
             updatedAt: response.UpdatedAt?.ToUniversalTime(),
             deadlineAt: response.DeadlineAt?.ToUniversalTime(),
             completedAt: response.CompletedAt?.ToUniversalTime(),
-            company: response.Company?.ToDomain(),
-            contact: response.Contact?.ToDomain(),
-            assignee: response.Assignee?.ToDomain()
+            company: response.Company is null ? null : ToDomain(response.Company),
+            contact: response.Contact is null ? null : ToDomain(response.Contact),
+            assignee: response.Assignee is null ? null : ToDomain(response.Assignee)
           );
     }
 
-    public static Issue ToDomainNew(this IssueResponse response)
+    public Issue ToDomainNew(IssueResponse response)
     {
         return Issue.CreateNew(
             id: response.Id,
             title: response.Title,
             description: response.Description,
-            priority: response.Priority?.ToDomain(),
-            status: response.Status?.ToDomain(),
-            type: response.Type?.ToDomain(),
+            priority: response.Priority is null ? null : ToDomain(response.Priority),
+            status: response.Status is null ? null : ToDomain(response.Status),
+            type: response.Type is null ? null : ToDomain(response.Type),
             createdAt: response.CreatedAt?.ToUniversalTime(),
             updatedAt: response.UpdatedAt?.ToUniversalTime(),
             deadlineAt: response.DeadlineAt?.ToUniversalTime(),
             completedAt: response.CompletedAt?.ToUniversalTime(),
-            company: response.Company?.ToDomain(),
-            contact: response.Contact?.ToDomain(),
-            assignee: response.Assignee?.ToDomain()
+            company: response.Company is null ? null : ToDomain(response.Company),
+            contact: response.Contact is null ? null : ToDomain(response.Contact),
+            assignee: response.Assignee is null ? null : ToDomain(response.Assignee)
           );
     }
 }

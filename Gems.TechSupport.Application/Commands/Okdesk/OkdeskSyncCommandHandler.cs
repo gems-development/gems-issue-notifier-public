@@ -43,7 +43,7 @@ internal sealed class OkdeskSyncCommandHandler(
 
             var issuesWithoutSkit = issues.Except(skitIssues).ToList();
 
-            var (issuesToAddInDb, issuesToUpdateInDb) = await issues.SeparateForAddAndUpdate(dbContext, cancellationToken);
+            var (issuesToAddInDb, issuesToUpdateInDb) = await issuesWithoutSkit.SeparateForAddAndUpdate(dbContext, cancellationToken);
 
             var addIssuesCommand = new AddIssuesCommand(issuesToAddInDb);
             var updateIssuesCommand = new UpdateIssuesCommand(issuesToUpdateInDb);

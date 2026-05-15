@@ -4,11 +4,13 @@
     "Gems.TechSupport": {
       "commandName": "Project",
       "dotnetRunMessages": true,
-        "environmentVariables": {
-            "DOTNET_ENVIRONMENT": "Development",
-            "CONSUL_KEY": "Gems.TechSupportIssueNotifier/appsettings.Development.json",
-            "CONSUL_HOST": "http://localhost:8500/"
-        }
+      "applicationUrl": "http://localhost:12003",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development",
+        "CONSUL_KEY": "Gems.TechSupportIssueNotifier/appsettings.json",
+        "CONSUL_HOST": "http://localhost:8500/",
+        "CONSUL_TOKEN": ""
+      }
     }
   }
 }

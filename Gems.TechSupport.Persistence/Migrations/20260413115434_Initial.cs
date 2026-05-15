@@ -39,6 +39,23 @@ namespace Gems.TechSupport.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "IssueCommentAggregatorOutBox",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    IssueId = table.Column<long>(type: "bigint", nullable: false),
+                    Type = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    Content = table.Column<string>(type: "text", nullable: false),
+                    OccuredOnUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ProcessedOnUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    Error = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_IssueCommentAggregatorOutBox", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "OutboxMessages",
                 columns: table => new
                 {
@@ -120,6 +137,7 @@ namespace Gems.TechSupport.Persistence.Migrations
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false),
                     Content = table.Column<string>(type: "text", nullable: false),
+                    Public = table.Column<bool>(type: "boolean", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     IssueId = table.Column<long>(type: "bigint", nullable: true),
                     ContactId = table.Column<long>(type: "bigint", nullable: false)
@@ -176,6 +194,9 @@ namespace Gems.TechSupport.Persistence.Migrations
         {
             migrationBuilder.DropTable(
                 name: "Comments");
+
+            migrationBuilder.DropTable(
+                name: "IssueCommentAggregatorOutBox");
 
             migrationBuilder.DropTable(
                 name: "OutboxMessages");

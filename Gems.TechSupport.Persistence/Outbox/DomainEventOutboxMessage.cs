@@ -1,6 +1,6 @@
 ﻿namespace Gems.TechSupport.Persistence.Outbox;
 
-public class OutboxMessage
+public class DomainEventOutboxMessage
 {
     public Guid Id { get; init; }
     public required string Type { get; init; }

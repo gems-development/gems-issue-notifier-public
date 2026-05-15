@@ -2,5 +2,5 @@
 
 namespace Gems.TechSupport.Domain.Events;
 
-public record IssueCommentCreatedEvent(long IssueId, long ContactId, string ContactFullName, string CommentContent) 
+public record IssueCommentCreatedEvent(long IssueId, long? AssigneeId, long ContactId, string ContactFullName, bool isCommentPublic, string CommentContent) 
     : IDomainEvent;

@@ -6,6 +6,7 @@ public record CommentResponse
 {
     public long Id { get; init; }
     public string Content { get; init; } = string.Empty;
+    public bool Public { get; init; }
     [JsonPropertyName("published_at")]
     public DateTime PublishedAt { get; init; }
     public required CommentAuthorResponse Author { get; init; }

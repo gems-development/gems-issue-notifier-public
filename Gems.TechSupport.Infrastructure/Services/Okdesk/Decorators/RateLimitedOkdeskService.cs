@@ -1,10 +1,9 @@
 ﻿using Gems.TechSupport.Application.Abstractions.Okdesk;
 using Gems.TechSupport.Application.Requests;
-using Gems.TechSupport.Domain.Enums;
 using Gems.TechSupport.Domain.Models;
 using System.Runtime.CompilerServices;
 
-namespace Gems.TechSupport.Infrastructure.Services.Okdesk;
+namespace Gems.TechSupport.Infrastructure.Services.Okdesk.Decorators;
 
 public sealed class RateLimitedOkdeskService(IOkdeskService okdeskService) : IOkdeskService
 {
@@ -36,6 +35,10 @@ public sealed class RateLimitedOkdeskService(IOkdeskService okdeskService) : IOk
     {
         return ExecuteWithSemaphore(request, okdeskService.SetIssueStatusAsync, cancellationToken);
     }
+    public Task SetIssueAutoCompletedStatusAsync(SetIssueAutoCompletedStatusRequest request, CancellationToken cancellationToken)
+    {
+        return ExecuteWithSemaphore(request, okdeskService.SetIssueAutoCompletedStatusAsync, cancellationToken);
+    }
 
     public Task DeleteIssueAsync(DeleteIssueRequest request, CancellationToken cancellationToken)
     {
@@ -44,7 +47,7 @@ public sealed class RateLimitedOkdeskService(IOkdeskService okdeskService) : IOk
 
     public Task PostCommentAsync(PostIssueCommentRequest request, CancellationToken cancellationToken)
     {
-        return ExecuteWithSemaphore(request, okdeskService.PostCommentAsync ,cancellationToken);
+        return ExecuteWithSemaphore(request, okdeskService.PostCommentAsync, cancellationToken);
     }
 
     private async Task ExecuteWithSemaphore<TRequest>(

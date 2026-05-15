@@ -17,7 +17,7 @@ namespace Gems.TechSupport.Persistence.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.9")
+                .HasAnnotation("ProductVersion", "10.0.4")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -60,6 +60,9 @@ namespace Gems.TechSupport.Persistence.Migrations
 
                     b.Property<long?>("IssueId")
                         .HasColumnType("bigint");
+
+                    b.Property<bool>("Public")
+                        .HasColumnType("boolean");
 
                     b.HasKey("Id");
 
@@ -151,6 +154,9 @@ namespace Gems.TechSupport.Persistence.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
+                    b.Property<DateTime?>("StaleNotifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Status")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
@@ -176,7 +182,7 @@ namespace Gems.TechSupport.Persistence.Migrations
                     b.ToTable("Issues", (string)null);
                 });
 
-            modelBuilder.Entity("Gems.TechSupport.Persistence.Outbox.OutboxMessage", b =>
+            modelBuilder.Entity("Gems.TechSupport.Persistence.Outbox.DomainEventOutboxMessage", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -203,6 +209,38 @@ namespace Gems.TechSupport.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("OutboxMessages", (string)null);
+                });
+
+            modelBuilder.Entity("Gems.TechSupport.Persistence.Outbox.IssueCommentAggregatorOutBoxMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Error")
+                        .HasColumnType("text");
+
+                    b.Property<long>("IssueId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("OccuredOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ProcessedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("IssueCommentAggregatorOutBox", (string)null);
                 });
 
             modelBuilder.Entity("Gems.TechSupport.Domain.Models.Comment", b =>

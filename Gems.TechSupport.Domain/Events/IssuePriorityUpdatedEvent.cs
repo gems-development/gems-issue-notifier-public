@@ -7,6 +7,7 @@ public record IssuePriorityUpdatedEvent(
     long IssueId,
     long AssigneeId,
     string ContactFullName,
-    IssuePriority Priority,
-    string UpdateAuthorType) 
+    IssuePriority OldPriority,
+    IssuePriority NewPriority,
+    string UpdateAuthorType)
     : IDomainEvent;

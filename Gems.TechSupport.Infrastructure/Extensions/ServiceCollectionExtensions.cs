@@ -1,4 +1,5 @@
-﻿using Gems.TechSupport.Application.Abstractions.Okdesk;
+﻿using Gems.TechSupport.Application;
+using Gems.TechSupport.Application.Abstractions.Okdesk;
 using Gems.TechSupport.Application.Abstractions.Telegram;
 using Gems.TechSupport.Infrastructure.BackgroundJobs;
 using Gems.TechSupport.Infrastructure.Metrics;
@@ -10,8 +11,12 @@ using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Options;
 using Polly;
 using Quartz;
-using Telegram.Bot;
 using System.Threading.RateLimiting;
+using Gems.TechSupport.Application.Abstractions.Aggregation;
+using Gems.TechSupport.Infrastructure.Services.Aggregation;
+using Gems.TechSupport.Infrastructure.Services.Okdesk.Decorators;
+using System.Diagnostics.Metrics;
+using Gems.TechSupport.Application.Options;
 
 
 namespace Gems.TechSupport.Infrastructure.Extensions;
@@ -22,19 +27,40 @@ public static class ServiceCollectionExtensions
     {
         services
             .AddOkdeskHttpClient(configuration)
-            .AddTelegramBotClient(configuration)
             .AddQuartzBackgroudJobs(configuration);
 
+        services.Configure<TelegramOptions>(configuration.GetSection(TelegramOptions.ConfigurationSection));
+
+        services.AddSingleton<ITelegramClientProvider, TelegramClientProvider>();
         services.AddScoped<ITelegramService, TelegramService>();
+        services.AddSingleton<IDisplayNameService, DisplayNameService>();
 
-        services.AddSingleton<ProcessedDomainEventsMetrics>();
+        services.Configure<ProblemTemplatesOptions>(
+            configuration
+                .GetSection(OkdeskOptions.ConfigurationSection)
+                .GetSection(ProblemTemplatesOptions.ConfigurationSection));
 
+        return services;
+    }
+
+    public static IServiceCollection AddRecordMetrics(this IServiceCollection services)
+    {
+        services.AddSingleton<ProcessedDomainEventsMetrics>(sp =>
+        {
+            var meterFactory = sp.GetRequiredService<IMeterFactory>();
+            return new ProcessedDomainEventsMetrics(meterFactory);
+        });
+        services.AddSingleton<ProcessedPostCommentsMetrics>(sp =>
+        {
+            var meterFactory = sp.GetRequiredService<IMeterFactory>();
+            return new ProcessedPostCommentsMetrics(meterFactory);
+        });
         return services;
     }
 
     private static IServiceCollection AddOkdeskHttpClient(this IServiceCollection services, IConfiguration configuration)
     {
-        services.Configure<OkdeskOptions>(configuration.GetSection(OkdeskOptions.ConfigurationSection));
+        services.Configure<OkdeskOptions>(configuration.GetSection(Constants.ConfigurationSections.Okdesk));
 
         services.AddHttpClient<IOkdeskService, OkdeskService>((serviceProvider, options) =>
         {
@@ -63,33 +89,17 @@ public static class ServiceCollectionExtensions
             });
         });
 
+        services.Decorate<IOkdeskService, OkdeskServiceWithMetrics>();
         services.AddSingleton<RateLimitedOkdeskService>();
         services.Decorate<IOkdeskService, RateLimitedOkdeskService>();
 
         services.AddScoped<IOkdeskNotificationTemplatesProvider, OkdeskNotificationTemplatesProvider>();
 
-        return services;
-    }
+        services.AddScoped<IProcessedObserver, ProcessedObserver>();
 
-    private static IServiceCollection AddTelegramBotClient(this IServiceCollection services, IConfiguration configuration)
-    {
-        services.Configure<TelegramOptions>(configuration.GetSection(TelegramOptions.ConfigurationSection));
+        services.AddScoped<IIssueCommentAggregatePlanBuilder, IssueCommentAggregatePlanBuilder>();
 
-        services.AddSingleton<ITelegramBotClient>(serviceProvider =>
-        {
-            var options = serviceProvider.GetRequiredService<IOptionsMonitor<TelegramOptions>>().CurrentValue;
-            TelegramBotClient client;
-            try
-            {
-                client = new TelegramBotClient(options.BotToken);
-            }
-            catch (ArgumentException e)
-            {
-                throw new ArgumentException(e.Message);
-            }
-
-            return client;
-        });
+        services.AddScoped<ICommentComposer, CommentComposer>();
 
 
         return services;
@@ -98,7 +108,10 @@ public static class ServiceCollectionExtensions
     private static IServiceCollection AddQuartzBackgroudJobs(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<ProcessOutboxMessagesOptions>(
-            configuration.GetSection(ProcessOutboxMessagesOptions.ConfigurationSection));
+            configuration.GetSection(Constants.ConfigurationSections.OutboxMessages));
+
+        services.Configure<StaleIssueNotificationOptions>(
+            configuration.GetSection(Constants.ConfigurationSections.StaleIssueNotification));
 
         services.AddQuartz();
         services.AddQuartzHostedService(options =>

@@ -5,6 +5,14 @@
       "commandVersion": "1.0",
       "serviceActions": {
         "gems.techsupport": "StartDebugging"
+      },
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development",
+        "CONSUL_KEY": "Gems.TechSupportIssueNotifier/appsettings.Development.json",
+        "CONSUL_HOST": "http://localhost:8500/"
+      },
+      "Metrics": {
+        "MetricsEndpoint": "http://localhost:4318/v1/metric"
       }
     }
   }

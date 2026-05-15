@@ -1,6 +1,4 @@
 ﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Winton.Extensions.Configuration.Consul;
 
 namespace Gems.TechSupport.Infrastructure.Extensions;
@@ -9,12 +7,16 @@ public static class ConfigurationBuilderExtensions
     public static IConfigurationBuilder AddConsulConfiguration(
         this IConfigurationBuilder builder)
     {
-        var (consulHost, consulKey) = GetConsulConnectionSettingsOrThrow();
+        var (consulHost, consulToken, consulKey) = GetConsulConnectionSettingsOrThrow();
 
         builder.AddConsul(consulKey, options =>
         {
             options.ConsulConfigurationOptions =
-                    cco => { cco.Address = new Uri(consulHost); };
+                cco =>
+                {
+                    cco.Address = new Uri(consulHost);
+                    cco.Token = consulToken;
+                };
 
             options.Optional = false;
 
@@ -34,11 +36,12 @@ public static class ConfigurationBuilderExtensions
         return builder;
     }
 
-    private static (string ConsulHost, string ConsulKey) GetConsulConnectionSettingsOrThrow()
+    private static (string ConsulHost, string ConsulToken, string ConsulKey) GetConsulConnectionSettingsOrThrow()
     {
         var host = Environment.GetEnvironmentVariable("CONSUL_HOST") ?? throw new InvalidOperationException("CONSUL_HOST is not set.");
+        var token = Environment.GetEnvironmentVariable("CONSUL_TOKEN") ?? throw new InvalidOperationException("CONSUL_TOKEN is not set.");
         var key = Environment.GetEnvironmentVariable("CONSUL_KEY") ?? throw new InvalidOperationException("CONSUL_KEY is not set.");
 
-        return (ConsulHost: host, ConsulKey: key);
+        return (ConsulHost: host, ConsulToken: token, ConsulKey: key);
     }
 }

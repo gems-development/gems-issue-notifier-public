@@ -8,5 +8,10 @@
         public required int? ThreadId { get; init; }
         public required string IssueCommentCreatedMessageTemplate { get; init; } = string.Empty;
         public required string IssuePriorityUpdatedMessageTemplate { get; init; } = string.Empty;
+
+        public required Dictionary<long, string> AssigneeUsername { get; init; }
+
+        public required int MaxCommentLength { get; init; }
+        public required string StaleIssueNotificationMessageTemplate { get; init; } = string.Empty;
     }
 }

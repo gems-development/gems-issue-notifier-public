@@ -18,7 +18,7 @@ internal sealed class OkdeskSyncJob(IOptionsMonitor<OkdeskOptions> options, ISen
         if (context.PreviousFireTimeUtc is not null)
         {
             dateTimeSince = context.PreviousFireTimeUtc.Value.DateTime;
-        } 
+        }
         else
         {
             dateTimeSince = dateTimeUntil
@@ -27,5 +27,16 @@ internal sealed class OkdeskSyncJob(IOptionsMonitor<OkdeskOptions> options, ISen
 
         var syncCommand = new OkdeskSyncCommand(dateTimeSince, dateTimeUntil, 50);
         await sender.Send(syncCommand, context.CancellationToken);
+
+        var trigger = context.Trigger as ISimpleTrigger;
+
+        if (trigger != null) {
+
+            var currentIntervalMinutes = (int)trigger.RepeatInterval.TotalMinutes;
+
+            if (currentIntervalMinutes != okdeskOptions.IssuesRequestIntervalInMinutes)
+                await QuartzTriggerUpdater.UpdateIntervalMinutesAsync(context, okdeskOptions.IssuesRequestIntervalInMinutes);
+        }
+
     }
 }

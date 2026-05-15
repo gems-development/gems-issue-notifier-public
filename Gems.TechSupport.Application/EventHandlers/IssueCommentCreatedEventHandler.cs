@@ -9,9 +9,13 @@ internal sealed class IssueCommentCreatedEventHandler(ITelegramService telegramS
 {
     public Task Handle(IssueCommentCreatedEvent notification, CancellationToken cancellationToken)
     {
+        if (notification.isCommentPublic) {
         return telegramService.SendIssueNewCommentNotificationAsync(
             notification.IssueId,
+            notification.AssigneeId,
             notification.ContactFullName,
             notification.CommentContent, cancellationToken);
+    }
+        return Task.CompletedTask;
     }
 }

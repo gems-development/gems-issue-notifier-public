@@ -19,7 +19,7 @@ internal sealed class ExceptionHandlingPipelineBehavior<TRequest, TResponse>(
         }
         catch (Exception exception)
         {
-            logger.LogError(@"Unhandled exception occured while processing {requestName} request
+            logger.LogError(exception, @"Unhandled exception occured while processing {requestName} request
             {exceptionType}: {exceptionMessage}", typeof(TRequest).Name, exception.GetType(), exception.Message);
 
             throw;

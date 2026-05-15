@@ -1,6 +1,6 @@
 ﻿using Gems.TechSupport.Application.Abstractions.Okdesk;
 using Gems.TechSupport.Application.Requests;
-using Gems.TechSupport.Application.Responses;
+using Gems.TechSupport.Application.Abstractions.Responses;
 using Gems.TechSupport.Application.Responses.Models;
 using Gems.TechSupport.Domain.Models;
 using Microsoft.Extensions.Options;
@@ -10,7 +10,7 @@ using System.Text;
 
 namespace Gems.TechSupport.Infrastructure.Services.Okdesk;
 
-public class OkdeskService(HttpClient httpClient, IOptionsMonitor<OkdeskOptions> options) : IOkdeskService
+public class OkdeskService(HttpClient httpClient, IOptionsMonitor<OkdeskOptions> options, IResponseToDomainMapper mapper) : IOkdeskService
 {
     public async Task<Issue> GetIssueDetailsByIdAsync(
         GetIssueDetailsByIdRequest request,
@@ -22,7 +22,7 @@ public class OkdeskService(HttpClient httpClient, IOptionsMonitor<OkdeskOptions>
 
         var response = (await httpClient.GetFromJsonAsync<IssueResponse>(uriString, cancellationToken))!;
 
-        var issue = response.ToDomainExisting();
+        var issue = mapper.ToDomainExisting(response);
 
         return issue;
     }
@@ -47,7 +47,7 @@ public class OkdeskService(HttpClient httpClient, IOptionsMonitor<OkdeskOptions>
         var response = (await httpClient.GetFromJsonAsync<List<CommentResponse>>(uriString, cancellationToken))!;
 
         var comments = response
-            .Select(x => x.ToDomain(request.IssueId))
+            .Select(x => mapper.ToDomain(x, request.IssueId))
             .OfType<Comment>()
             .ToList();
 
@@ -55,6 +55,14 @@ public class OkdeskService(HttpClient httpClient, IOptionsMonitor<OkdeskOptions>
     }
 
     public Task SetIssueStatusAsync(SetIssueStatusRequest request, CancellationToken cancellationToken)
+    {
+        var okdeskOptions = options.CurrentValue;
+
+        var uriString = $"{request.IssueId}/statuses?api_token={okdeskOptions.ApiToken}";
+
+        return httpClient.PostAsJsonAsync(uriString, request, cancellationToken);
+    }
+    public Task SetIssueAutoCompletedStatusAsync(SetIssueAutoCompletedStatusRequest request, CancellationToken cancellationToken)
     {
         var okdeskOptions = options.CurrentValue;
 
@@ -111,16 +119,16 @@ public class OkdeskService(HttpClient httpClient, IOptionsMonitor<OkdeskOptions>
                 {
                     if (createdAt >= since && createdAt <= until)
                     {
-                        issues.Add(issue.ToDomainNew());
+                        issues.Add(mapper.ToDomainNew(issue));
                     }
                     else
                     {
-                        issues.Add(issue.ToDomainExisting());
+                        issues.Add(mapper.ToDomainExisting(issue));
                     }
                 }
                 else
                 {
-                    issues.Add(issue.ToDomainExisting());
+                    issues.Add(mapper.ToDomainExisting(issue));
                 }
             }
 
